@@ -107,6 +107,105 @@
           
           
             
+              <a class="post-title-link" href="/2015/05/10/Linux下svn安装和配置/">
+                Linux下svn安装和配置
+              </a>
+            
+          
+        </h1>
+      
+
+      <div class="post-meta">
+        <span class="post-time">
+          
+            发表于 2015-05-10
+          
+        </span>
+
+        
+          
+        
+
+        
+          
+        
+      </div>
+    </div>
+
+    
+      <div class="post-body">
+
+        
+        
+
+        
+          
+            <h1 id="安装SVN">安装SVN</h1><p>这篇文章介绍的是CentOS-6.6下使用yum安装svn服务和配置的说明。</p>
+<h2 id="安装svn">安装svn</h2><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># yum install subversion</span></span><br></pre></td></tr></table></figure>
+<h2 id="验证安装">验证安装</h2><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># svnserve --version</span></span><br><span class="line">svnserve, version <span class="number">1.6</span>.<span class="number">11</span> (r934486)</span><br><span class="line">   compiled Feb <span class="number">10</span> <span class="number">2015</span>, <span class="number">21</span>:<span class="number">52</span>:<span class="number">19</span></span><br><span class="line"></span><br><span class="line">Copyright (C) <span class="number">2000</span>-<span class="number">2009</span> CollabNet.</span><br><span class="line">Subversion is open <span class="built_in">source</span> software, see http://subversion.tigris.org/</span><br><span class="line">This product includes software developed by CollabNet (http://www.Collab.Net/).</span><br><span class="line">...</span><br></pre></td></tr></table></figure>
+<p>安装成功版本号为:1.6.11 (r934486)。</p>
+<h1 id="配置SVN">配置SVN</h1><p>SVN的代码管理是基于仓库，我们需要新建仓库，才能进行配置。</p>
+<h2 id="仓库创建">仓库创建</h2><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># mkdir -p /opt/svn/repos</span></span><br><span class="line"><span class="comment"># svnadmin create /opt/svn/repos</span></span><br></pre></td></tr></table></figure>
+<p>执行上面的命令,自动创建一个名为repos的仓库,查看/opt/svn/repos目录,包含conf,db,format,hooks,locks,README.txt等目录文件，说明创建svn库成功。</p>
+<h2 id="仓库配置">仓库配置</h2><p>仓库配置文件主要在conf目录，可以进行”创建用户”、”配置目录权限”、”仓库设置”等配置。</p>
+<h3 id="编辑passwd文件新增用户">编辑passwd文件新增用户</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># cd /opt/svn/repos/conf</span></span><br><span class="line"><span class="comment"># vim passwd</span></span><br></pre></td></tr></table></figure>
+<p>配置用户只需要在文本[users]下以“用户名=密码”的形式新增行即可，一行为一个用户，例如我添加了5个用户。</p>
+<figure class="highlight vim"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">[users]</span><br><span class="line"># harry = harryssecret</span><br><span class="line"># sally = sallyssecret</span><br><span class="line">admin=admin123.<span class="keyword">com</span></span><br><span class="line">wangbin=<span class="number">123</span>.<span class="keyword">com</span></span><br><span class="line">wangqin=<span class="number">123</span>.<span class="keyword">com</span></span><br><span class="line">wangxian=<span class="number">123</span>.<span class="keyword">com</span></span><br><span class="line">wangxu=<span class="number">123</span>.<span class="keyword">com</span></span><br></pre></td></tr></table></figure>
+<h3 id="编辑authz文件配置权限">编辑authz文件配置权限</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># vim authz</span></span><br></pre></td></tr></table></figure>
+<p>为了方便管理目录权限，我们先为用户进行分组。该文本下有[groups]标签，为配置用户组，以“组名=用户1，用户2”的形式来创建分组，例如我把wangbin,wangqin这两个用户分到project_1这个组里，wangxian,wangxu这两个用户分到project_2这个组里，进行如下编辑:<br><figure class="highlight vim"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">[groups]</span><br><span class="line"># harry_and_sally = harry,sally</span><br><span class="line"># harry_sally_and_joe = harry,sally,&amp;joe</span><br><span class="line">project_1 = wangbin,wangqin</span><br><span class="line">project_2 = wangxian,wangxu</span><br></pre></td></tr></table></figure></p>
+<h3 id="为目录划分权限">为目录划分权限</h3><p>我现在整个项目管理总共有三个目录，repos/(项目根目录)，repos/project_1(项目1目录)，repos/project_2(项目2目录)。想让admin可以管理所有目录，project_1项目组所有用户可以管理repos/project_1目录，project_2项目组可以管理repos/project_2目录。那么我就可以继续编辑authz文件进行以下配置：</p>
+<figure class="highlight vim"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line">[groups]</span><br><span class="line"># harry_and_sally = harry,sally</span><br><span class="line"># harry_sally_and_joe = harry,sally,&amp;joe</span><br><span class="line">project_1 = wangbin,wangqin</span><br><span class="line">project_2 = wangxian,wangxu</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">[repo<span class="variable">s:</span>/]</span><br><span class="line">admin=rw</span><br><span class="line">*=</span><br><span class="line"></span><br><span class="line">[repo<span class="variable">s:</span>/project_1]</span><br><span class="line">@project_1 = rw</span><br><span class="line">admin=rw</span><br><span class="line">*=</span><br><span class="line"></span><br><span class="line">[repo<span class="variable">s:</span>/project_2]</span><br><span class="line">@project_2 = rw</span><br><span class="line">admin=rw</span><br><span class="line">*=</span><br></pre></td></tr></table></figure>
+<p>以”[仓库名:目录]”的形式来配置目录权限，以”@组名=权限”的形式来配置用户组权限，以”用户名=权限”的形式来配置用户权限。其中r表示对该目录有读权限，w表示对该目录有写的权限。最后一行的*=表示，除了上面设置了权限的用户组之外，其他任何人都被禁止访问本目录。这个很重要，一定要加上！</p>
+<h3 id="编辑svnserve-conf文件，配置生效">编辑svnserve.conf文件，配置生效</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># vim svnserve.conf</span></span><br></pre></td></tr></table></figure>
+<p>在[general]下添加如下文本文本。<br><figure class="highlight vim"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">[general]</span><br><span class="line">#匿名访问的权限，可以是<span class="keyword">read</span>,<span class="keyword">write</span>,none,默认为<span class="keyword">read</span></span><br><span class="line">anon-access=none</span><br><span class="line">#使授权用户有写权限</span><br><span class="line">auth-access=<span class="keyword">write</span></span><br><span class="line">#密码数据库的路径</span><br><span class="line">password-db=passwd</span><br><span class="line">#访问控制文件</span><br><span class="line">authz-db=authz</span><br><span class="line">#认证命名空间，svn会在认证提示里显示，并且作为凭证缓存的关键字</span><br><span class="line">realm=/<span class="keyword">opt</span>/svn/repos</span><br></pre></td></tr></table></figure></p>
+<h1 id="运行SVN">运行SVN</h1><p>如果不需要http访问的话，以上配置就已经完成了，接下来就是如何启动svn和停止svn了。</p>
+<h2 id="启动svn">启动svn</h2><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># svnserve -d -r /opt/svn</span></span><br></pre></td></tr></table></figure>
+<p>以上命令可以启动svn，启动默认的端口号为3690。</p>
+<h2 id="停止svn">停止svn</h2><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># killall svnserve</span></span><br></pre></td></tr></table></figure>
+<h2 id="配置防火墙端口权限">配置防火墙端口权限</h2><p>编辑/etc/sysconfig/iptables文件<br><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># vim /etc/sysconfig/iptables</span></span><br></pre></td></tr></table></figure></p>
+<p>添加以下内容，开发3690端口<br><figure class="highlight vim"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">-A INPUT -<span class="keyword">m</span> state --state NEW -<span class="keyword">m</span> tcp -<span class="keyword">p</span> tcp --dport <span class="number">3690</span> -<span class="keyword">j</span> ACCEPT</span><br></pre></td></tr></table></figure></p>
+<p>保存重启防火墙让配置生效<br><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># service iptables restart</span></span><br></pre></td></tr></table></figure></p>
+
+          
+        
+      </div>
+    
+
+    
+      <div class="post-footer">
+        
+          <div class="post-tags">
+            
+              <a href="/tags/linux/">
+                #linux
+              </a>
+            
+          </div>
+        
+
+        
+
+        
+        
+          <div class="post-eof"></div>
+        
+      </div>
+    
+  </div>
+
+
+  
+    
+
+  <div class="post post-type-normal ">
+    <div class="post-header">
+
+      
+      
+        <h1 class="post-title">
+          
+          
+            
               <a class="post-title-link" href="/2015/04/20/Standard JPA does not support custom isolation levels/">
                 Standard JPA does not support custom isolation levels
               </a>
@@ -286,7 +385,7 @@
       <div class="site-state motion-element">
         <div class="site-state-item site-state-posts">
           <a href="/archives">
-            <span class="site-state-item-count">2</span>
+            <span class="site-state-item-count">3</span>
             <span class="site-state-item-name">日志</span>
           </a>
         </div>
@@ -300,7 +399,7 @@
 
         <div class="site-state-item site-state-tags">
           <a href="/tags">
-            <span class="site-state-item-count">2</span>
+            <span class="site-state-item-count">3</span>
             <span class="site-state-item-name">标签</span>
           </a>
         </div>
