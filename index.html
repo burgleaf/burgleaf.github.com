@@ -107,6 +107,111 @@
           
           
             
+              <a class="post-title-link" href="/2015/07/22/本地端口映射到服务器访问/">
+                本地端口映射到服务器访问
+              </a>
+            
+          
+        </h1>
+      
+
+      <div class="post-meta">
+        <span class="post-time">
+          
+            发表于 2015-07-22
+          
+        </span>
+
+        
+          
+        
+
+        
+          
+        
+      </div>
+    </div>
+
+    
+      <div class="post-body">
+
+        
+        
+
+        
+          
+            <p>这个需求源于做微信项目，你在本地做开发不可能经常把项目部署到服务器上做微信api的调试。所以需要一款软件能通过一个公网的域名访问来映射到本地端口的软件。</p>
+<p>国外有一款软件叫做ngrok可以做这件事，配置也相当简单。</p>
+<h2 id="ngrok配置">ngrok配置</h2><h3 id="下载ngrok">下载ngrok</h3><p>进入<a href="https://ngrok.com/download" target="_blank" rel="external">ngrok.com</a>下载对应的版本。</p>
+<h3 id="配置ngrok">配置ngrok</h3><ul>
+<li>首先注册一个ngrok帐号并登录到控制面板，获取Authtoken。</li>
+<li>然后解压ngrok并切换到ngrok目录。</li>
+<li>再配置绑定Authtoken<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">./ngrok authtoken yourauthtoken  <span class="comment">#在家目录生成了一个.ngrok2/ngrok.yml文件</span></span><br></pre></td></tr></table></figure>
+</li>
+</ul>
+<h3 id="启用端口映射">启用端口映射</h3><ul>
+<li>直接命令<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">./ngrok http <span class="number">4000</span> <span class="comment">#需要映射的本地端口</span></span><br></pre></td></tr></table></figure>
+</li>
+</ul>
+<p>启用成功你就可以在控制面板看到这样的信息：</p>
+<blockquote>
+<p>ngrok by @inconshreveable                                       (Ctrl+C to quit)</p>
+<p>Tunnel Status                 online<br>Version                       2.0.19/2.0.19<br>Web Interface                 <a href="http://127.0.0.1:4040" target="_blank" rel="external">http://127.0.0.1:4040</a><br>Forwarding                    <a href="http://768d1f6f.ngrok.io" target="_blank" rel="external">http://768d1f6f.ngrok.io</a> -&gt; localhost:4000<br>Forwarding                    <a href="https://768d1f6f.ngrok.io" target="_blank" rel="external">https://768d1f6f.ngrok.io</a> -&gt; localhost:4000</p>
+<p>Connections                   ttl     opn     rt1     rt5     p50     p90<br>                             0       0       0.00    0.00    0.00    0.00</p>
+</blockquote>
+<p>那么访问 <a href="http://768d1f6f.ngrok.io" target="_blank" rel="external">http://768d1f6f.ngrok.io</a> 就可以访问到本地的4000端口了，访问 <a href="http://127.0.0.1:4040" target="_blank" rel="external">http://127.0.0.1:4040</a>  可以看到整个http的调试信息。</p>
+<p><em>但是ngrok针对国内用户缺陷就是速度太慢了，调试起来并不如意。</em></p>
+<p><strong>但如果你有一台国内的vps服务器那就可以使用socat这款软件做映射，调试起来就非常爽了。</strong></p>
+<h2 id="socat配置">socat配置</h2><p>这里使用centos6加windows。</p>
+<h3 id="安装服务器端socat">安装服务器端socat</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">wget –no-cache http://www.convirture.com/repos/definitions/rhel/<span class="number">6</span>.x/convirt.repo -O /etc/yum.repos.d/convirt.repo</span><br><span class="line">yum makecache</span><br><span class="line">yum install socat</span><br></pre></td></tr></table></figure>
+<h3 id="配置服务监听">配置服务监听</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">socat <span class="operator">-d</span> <span class="operator">-d</span> <span class="operator">-d</span> tcp<span class="operator">-l</span>:<span class="number">8894</span>,reuseaddr,<span class="built_in">bind</span>=<span class="number">0.0</span>.<span class="number">0.0</span>,fork tcp<span class="operator">-l</span>:<span class="number">8895</span>,<span class="built_in">bind</span>=<span class="number">0.0</span>.<span class="number">0.0</span>,reuseaddr,retry=<span class="number">10</span></span><br></pre></td></tr></table></figure>
+<p>这里8894是转发端口，8895是外部访问端口。意思是只要访问你服务器的8895端口都会通过8894端口做转发。</p>
+<h3 id="安装客户端socat">安装客户端socat</h3><p>下载<a href="http://blog.gentilkiwi.com/programmes/socat?id=43#englishversion" target="_blank" rel="external">socat for windows</a>并解压。</p>
+<h3 id="配置客户端监听">配置客户端监听</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">socat <span class="operator">-d</span> <span class="operator">-d</span> <span class="operator">-d</span> -v tcp:vpsip:<span class="number">8894</span>,forever,intervall=<span class="number">10</span>,fork tcp:localhost:<span class="number">4000</span></span><br></pre></td></tr></table></figure>
+<p>这里去做一个服务器端8894的连接，当连接成功就会映射到本地4000端口的应用。</p>
+<p><strong>配置好就OK了，访问服务器ip:8895就可以访问到本地4000端口。</strong></p>
+<p>如果需要域名访问的话那么就用nginx整一个反向代理到8895端口就行了。</p>
+
+          
+        
+      </div>
+    
+
+    
+      <div class="post-footer">
+        
+          <div class="post-tags">
+            
+              <a href="/tags/hexo/">
+                #hexo
+              </a>
+            
+          </div>
+        
+
+        
+
+        
+        
+          <div class="post-eof"></div>
+        
+      </div>
+    
+  </div>
+
+
+  
+    
+
+  <div class="post post-type-normal ">
+    <div class="post-header">
+
+      
+      
+        <h1 class="post-title">
+          
+          
+            
               <a class="post-title-link" href="/2015/07/09/nodejs从零开始系列-一/">
                 nodejs从零开始系列(一)
               </a>
@@ -480,7 +585,7 @@
       <div class="site-state motion-element">
         <div class="site-state-item site-state-posts">
           <a href="/archives">
-            <span class="site-state-item-count">4</span>
+            <span class="site-state-item-count">5</span>
             <span class="site-state-item-name">日志</span>
           </a>
         </div>
@@ -494,7 +599,7 @@
 
         <div class="site-state-item site-state-tags">
           <a href="/tags">
-            <span class="site-state-item-count">5</span>
+            <span class="site-state-item-count">4</span>
             <span class="site-state-item-name">标签</span>
           </a>
         </div>
