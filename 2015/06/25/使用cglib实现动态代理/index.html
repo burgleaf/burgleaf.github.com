@@ -18,9 +18,9 @@
 
 
 
-	<meta name="keywords" content="hexo," />
+	<meta name="keywords" content="cglib," />
 
-  <title> 终于放弃wordpress拥抱hexo了 // 猫轻扬 </title>
+  <title> 使用cglib实现动态代理 // 猫轻扬 </title>
 </head>
 
 <body>
@@ -94,7 +94,7 @@
           
           
             
-              终于放弃wordpress拥抱hexo了
+              使用cglib实现动态代理
             
           
         </h1>
@@ -103,11 +103,22 @@
       <div class="post-meta">
         <span class="post-time">
           
-            发表于 2015-04-07
+            发表于 2015-06-25
           
         </span>
 
         
+          
+            <span class="post-category">
+              &nbsp; | &nbsp; 分类于
+              
+                <a href="/categories/java/">java</a>
+
+                
+                
+
+              
+            </span>
           
         
 
@@ -124,11 +135,20 @@
         
 
         
-          <p>虽然wordpress是php史上最优雅的cms，但还是决定放弃它。</p>
-<p>因为我仅仅只是需要一个博客，功能简洁运行效率高即可。那么wordpress就显得非常繁杂了，一大堆插件一大堆配置，做迁移的话又是一大堆sql导来导去，麻烦的要死。</p>
-<p>而且更重要的一点：不知道被黑多少回了。</p>
-<p>hexo的好处在于简单，要是几年前我还不敢想象一个cms系统居然连个后台连个富文本编辑器都不用要。一个命令，然后敲markdown语法，再敲几个命令一个博客就搭好了。而且全部一键生成了静态页面，做迁移的话直接把整个目录复制出去就行，换个地方连环境都不用配。而且我本来就搭一个小博客而已，你还要我装mysql，装apache，装php。</p>
-<p>所以hexo做博客再合适不过了，搭建方法可以参考:<a href="http://ibruce.info/2013/11/22/hexo-your-blog/" target="_blank" rel="external">这里</a>。</p>
+          <blockquote>
+<p>CGLib (Code Generation Library) 是一个强大的,高性能,高质量的Code生成类库。它可以在运行期扩展Java类与实现Java接口。Hibernate用它来实现PO字节码的动态生成。<br>CGLib 比 Java 的 java.lang.reflect.Proxy 类更强的在于它不仅可以接管接口类的方法，还可以接管普通类的方法。<br>CGLib 的底层是Java字节码操作框架 —— <a href="http://www.oschina.net/p/asm" target="_blank" rel="external">ASM</a>。<br>查看 cglib 的 <a href="http://cglib.sourceforge.net/apidocs/index.html" target="_blank" rel="external">JavaDoc</a>文档。</p>
+</blockquote>
+<p>以上是CGLib的介绍，看起来有点生涩，实际上你就把他当作一个动态代理的工具就好了。相对静态代理来说动态代理不用和代理类实现同一个接口，避免了很多代理类的生成，减少了代码的侵入性。<br>举一个简单的例子，假如你有N多个类，每个类里面都有很多方法。其中一些方法需要传入的参数和类方法的属性来产生日志。笨办法是在每个方法里面都写一遍记入日志的逻辑代码，用简单的做法就是使用代理模式的方法去做。</p>
+<p>下面使用cglib来实现动态代理，一个类里面有五个方法，需要在其中三个方法里面根据所传参数打印一句话。</p>
+<p>代码如下，首先写一个注解，来标识那些类需要打印一句话。<br><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="annotation">@Target</span>(ElementType.METHOD)</span><br><span class="line"><span class="annotation">@Retention</span>(RetentionPolicy.RUNTIME)</span><br><span class="line"><span class="keyword">public</span> <span class="annotation">@interface</span> Need &#123;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>再写一个有五个方法的类：<br><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">Hello</span></span>&#123;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">say</span><span class="params">(String name)</span></span>&#123;</span><br><span class="line">    System.out.println(<span class="string">"Hello!"</span>+name);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="annotation">@Need</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">say1</span><span class="params">(String name)</span></span>&#123;</span><br><span class="line">    System.out.println(<span class="string">"Hello!"</span>+name);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="annotation">@Need</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">say2</span><span class="params">(String name)</span></span>&#123;</span><br><span class="line">    System.out.println(<span class="string">"Hello!"</span>+name);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="annotation">@Need</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">say3</span><span class="params">(String name)</span></span>&#123;</span><br><span class="line">    System.out.println(<span class="string">"Hello!"</span>+name);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">say4</span><span class="params">(String name)</span></span>&#123;</span><br><span class="line">    System.out.println(<span class="string">"Hello!"</span>+name);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>然后使用CGLib的MethodInterceptor接口来过滤类里的方法：<br><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">CGLibProxy</span> <span class="keyword">implements</span> <span class="title">MethodInterceptor</span> </span>&#123;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">public</span> T <span class="title">getProxy</span><span class="params">(Class cls)</span></span>&#123;</span><br><span class="line">    <span class="keyword">return</span> (T)Enhancer.create(cls,<span class="keyword">this</span>);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">public</span> Object <span class="title">intercept</span><span class="params">(Object obj,Method method,Object[] args,MethodProxy proxy)</span><span class="keyword">throws</span> Throwable</span>&#123;</span><br><span class="line">    <span class="comment">//代理类中的所有方法</span></span><br><span class="line">    Object result = proxy.invokeSuper(obj,args);</span><br><span class="line">    <span class="comment">//判断方法上面有没有@Need注解</span></span><br><span class="line">    <span class="keyword">if</span>(method.isAnnotationPresent(Need.class))&#123;</span><br><span class="line">        needPrint(method.getName());</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> result;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">needPrint</span><span class="params">(String name)</span></span>&#123;</span><br><span class="line">    System.out.println(name+<span class="string">":go go go!"</span>);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>大功告成可以测试了，写一个main()方法：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">main</span><span class="params">(String[] args)</span> </span>&#123;</span><br><span class="line">    CGLibProxy cgLibProxy = <span class="keyword">new</span> CGLibProxy();</span><br><span class="line">    Hello helloProxy = cgLibProxy.getProxy(Hello.class);</span><br><span class="line">    helloProxy.say(<span class="string">"say1"</span>);</span><br><span class="line">    helloProxy.say1(<span class="string">"say2"</span>);</span><br><span class="line">    helloProxy.say2(<span class="string">"say3"</span>);</span><br><span class="line">    helloProxy.say3(<span class="string">"say4"</span>);</span><br><span class="line">    helloProxy.say4(<span class="string">"say5"</span>);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<blockquote>
+<p>测试结果：<br>Hello!say1<br>Hello!say2<br>say1:go go go!<br>Hello!say3<br>say2:go go go!<br>Hello!say4<br>say3:go go go!<br>Hello!say5</p>
+</blockquote>
+<p>本文参考来自<a href="http://my.oschina.net/huangyong/blog/159788?p=3#comments" target="_blank" rel="external">这里</a>。</p>
 
         
       </div>
@@ -139,8 +159,8 @@
         
           <div class="post-tags">
             
-              <a href="/tags/hexo/">
-                #hexo
+              <a href="/tags/cglib/">
+                #cglib
               </a>
             
           </div>
@@ -150,11 +170,13 @@
           <div class="post-nav">
             <div class="post-nav-prev post-nav-item">
               
-                <a href="/2015/04/11/用python备份mysql和目录的小例子/">用python备份mysql和目录的小例子</a>
+                <a href="/2015/07/22/本地端口映射到服务器访问/">本地端口映射到服务器访问</a>
               
             </div>
 
             <div class="post-nav-next post-nav-item">
+              
+                <a href="/2015/06/01/虚拟机NAT网络模式下配置端口映射/">虚拟机NAT网络模式下配置端口映射</a>
               
             </div>
           </div>

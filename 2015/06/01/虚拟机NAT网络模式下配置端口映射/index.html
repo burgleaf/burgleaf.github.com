@@ -18,9 +18,9 @@
 
 
 
-	<meta name="keywords" content="hexo," />
+	<meta name="keywords" content="端口映射," />
 
-  <title> 终于放弃wordpress拥抱hexo了 // 猫轻扬 </title>
+  <title> 虚拟机NAT网络模式下配置端口映射 // 猫轻扬 </title>
 </head>
 
 <body>
@@ -94,7 +94,7 @@
           
           
             
-              终于放弃wordpress拥抱hexo了
+              虚拟机NAT网络模式下配置端口映射
             
           
         </h1>
@@ -103,11 +103,22 @@
       <div class="post-meta">
         <span class="post-time">
           
-            发表于 2015-04-07
+            发表于 2015-06-01
           
         </span>
 
         
+          
+            <span class="post-category">
+              &nbsp; | &nbsp; 分类于
+              
+                <a href="/categories/network/">network</a>
+
+                
+                
+
+              
+            </span>
           
         
 
@@ -124,11 +135,32 @@
         
 
         
-          <p>虽然wordpress是php史上最优雅的cms，但还是决定放弃它。</p>
-<p>因为我仅仅只是需要一个博客，功能简洁运行效率高即可。那么wordpress就显得非常繁杂了，一大堆插件一大堆配置，做迁移的话又是一大堆sql导来导去，麻烦的要死。</p>
-<p>而且更重要的一点：不知道被黑多少回了。</p>
-<p>hexo的好处在于简单，要是几年前我还不敢想象一个cms系统居然连个后台连个富文本编辑器都不用要。一个命令，然后敲markdown语法，再敲几个命令一个博客就搭好了。而且全部一键生成了静态页面，做迁移的话直接把整个目录复制出去就行，换个地方连环境都不用配。而且我本来就搭一个小博客而已，你还要我装mysql，装apache，装php。</p>
-<p>所以hexo做博客再合适不过了，搭建方法可以参考:<a href="http://ibruce.info/2013/11/22/hexo-your-blog/" target="_blank" rel="external">这里</a>。</p>
+          <p>无论你是使用Vbox还是使用VMware要使虚拟机能够上网就要么选择NAT网络模式要么选择桥接网络模式。我个人比较喜欢桥接，什么都不用配置虚拟机和主机就相当于局域网中两台独立的电脑了，可以互相访问。</p>
+<p>但是有些场景你就必需要使用NAT网络模式了，比如说你这台虚拟机不希望让局域网内其他的机器访问，并且你的多台虚拟机之间可以互相访问。其实NAT这种网络模式就相当于你自己的电脑是台路由器了，给你自己的虚拟机创建了一个局域网，你自己的电脑和外网交互，虚拟机和你交互。但是这种网络模式有一个缺点，就是虚拟机能ping通你但是你ping通不了虚拟机。这就导致如果虚拟机上面启动了一个web工程你在你自己的主机上是无法访问的，这样就只能做端口映射了。</p>
+<p>下面讲解在Vbox和VMware下如何做虚拟机的端口映射。</p>
+<h2 id="Vbox配置NAT端口映射">Vbox配置NAT端口映射</h2><ul>
+<li>首先在Vbox设置网络里面选择NAT模式。然后启动虚拟机里系统将获取ip地址的方式设置为DHCP模式，再查看系统的ip地址。一般情况下Vbox加载的第一台虚拟机的ip地址会分配为10.0.2.15。</li>
+</ul>
+<p><img src="http://burgleaf.qiniudn.com/wp-content/uploads/2013/10/QQ截图20131015224253.png" alt="ip"></p>
+<ul>
+<li>选择Vbox里面虚拟机的设置—&gt;网络—&gt;端口转发。</li>
+</ul>
+<p><img src="http://burgleaf.qiniudn.com/wp-content/uploads/2013/10/QQ截图20131015224758.png" alt="ip"></p>
+<ul>
+<li>如果要访问虚拟机的web程序80端口，就填写主机IP：127.0.0.1，主机端口：22223（随便填写5位数即可），子系统ip填写你虚拟机的ip地址，我的是:10.0.2.15，子系统端口写:80。</li>
+</ul>
+<p>这样当虚拟机系统启动了80端口的web程序，那么你就可以在浏览器里面输入<a href="http://127.0.0.1:22223来访问了。" target="_blank" rel="external">http://127.0.0.1:22223来访问了。</a></p>
+<h2 id="VMware配置NAT端口映射">VMware配置NAT端口映射</h2><ul>
+<li>打开菜单，在菜单栏里面选择Edit—&gt;Virtual Network Editor</li>
+</ul>
+<p><img src="http://burgleaf.qiniudn.com/wp-content/uploads/2013/10/QQ截图20131015225744.png" alt="ip"></p>
+<ul>
+<li>再选择你在VMware里面配置的NAT虚拟机的那一个NetWork，点NAT Settings。</li>
+</ul>
+<p><img src="http://burgleaf.qiniudn.com/wp-content/uploads/2013/10/QQ截图20131015225944.png" alt="ip"></p>
+<p>我在VMware里面加载的系统的ip地址为192.168.72.128，我需要映射的端口是8080。那么我就可以add一个，Host port为10001，Virtual machine IP address为192.168.72.128，virtual machine port为8080。</p>
+<p><img src="http://burgleaf.qiniudn.com/wp-content/uploads/2013/10/QQ截图20131015230727.png" alt="ip"></p>
+<p>点Ok后我就可以在浏览器上面输入<a href="http://127.0.0.1:10001访问了。" target="_blank" rel="external">http://127.0.0.1:10001访问了。</a></p>
 
         
       </div>
@@ -139,8 +171,8 @@
         
           <div class="post-tags">
             
-              <a href="/tags/hexo/">
-                #hexo
+              <a href="/tags/端口映射/">
+                #端口映射
               </a>
             
           </div>
@@ -150,11 +182,13 @@
           <div class="post-nav">
             <div class="post-nav-prev post-nav-item">
               
-                <a href="/2015/04/11/用python备份mysql和目录的小例子/">用python备份mysql和目录的小例子</a>
+                <a href="/2015/06/25/使用cglib实现动态代理/">使用cglib实现动态代理</a>
               
             </div>
 
             <div class="post-nav-next post-nav-item">
+              
+                <a href="/2015/05/10/Linux下svn安装和配置/">Linux下svn安装和配置</a>
               
             </div>
           </div>
@@ -249,7 +283,7 @@
         <div class="post-toc">
           
           
-            <p class="post-toc-empty">此文章未包含目录</p>
+            <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#Vbox配置NAT端口映射"><span class="nav-number">1.</span> <span class="nav-text">Vbox配置NAT端口映射</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#VMware配置NAT端口映射"><span class="nav-number">2.</span> <span class="nav-text">VMware配置NAT端口映射</span></a></li></ol></div>
           
         </div>
         <div class="post-toc-indicator-bottom post-toc-indicator"></div>
