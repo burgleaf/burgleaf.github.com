@@ -304,8 +304,51 @@
           
             <h1 id="elasticsearch简介">elasticsearch简介</h1><p>Elasticsearch是一个基于Apache Lucene(TM)的开源搜索引擎。无论在开源还是专有领域，Lucene可以被认为是迄今为止最先进、性能最好的、功能最全的搜索引擎库。<br>但是，Lucene只是一个库。想要使用它，你必须使用Java来作为开发语言并将其直接集成到你的应用中，更糟糕的是，Lucene非常复杂，你需要深入了解检索的相关知识来理解它是如何工作的。<br>Elasticsearch也使用Java开发并使用Lucene作为其核心来实现所有索引和搜索的功能，但是它的目的是通过简单的RESTful API来隐藏Lucene的复杂性，从而让全文搜索变得简单。</p>
 <p>不过，Elasticsearch不仅仅是Lucene和全文搜索，我们还能这样去描述它：<br>分布式的实时文件存储，每个字段都被索引并可被搜索<br>分布式的实时分析搜索引擎<br>可以扩展到上百台服务器，处理PB级结构化或非结构化数据<br>而且，所有的这些功能被集成到一个服务里面，你的应用可以通过简单的RESTful API、各种语言的客户端甚至命令行与之交互。</p>
-<h1 id="elasticsearch安装">elasticsearch安装</h1><p>*首先确保系统安装了java环境。</p>
-<p>在<a href="https://www.elastic.co/downloads/elasticsearch" target="_blank" rel="external">https://www.elastic.co/downloads/elasticsearch</a>下载相对应的版本,本文使用的是2.2.1。<br>下载解压后打开elasticsearch/bin目录,运行elasticsearch.bat就可以直接使用了(linux系统使用./bin/elasticsearch运行)。<br>elasticsearch默认会使用9200和9300端口，你也可以在config/elasticsearch.yml去更改相应的端口号。</p>
+<h1 id="elasticsearch安装">elasticsearch安装</h1><blockquote>
+<p>首先确保系统安装了java环境。</p>
+</blockquote>
+<p>在<a href="https://www.elastic.co/downloads/elasticsearch" target="_blank" rel="external">https://www.elastic.co/downloads/elasticsearch</a>下载相对应的版本,本文使用的是2.2.1。<br>下载解压后打开elasticsearch/bin目录,运行elasticsearch.bat启动(linux系统使用./bin/elasticsearch运行)。elasticsearch默认会使用9200和9300端口，你也可以在config/elasticsearch.yml去更改相应的端口号。<br>启动完成后使用浏览器打开<a href="http://localhost:9200/?pretty" target="_blank" rel="external">http://localhost:9200/?pretty</a><br>看到以下返回信息:<br><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">&#123;</span><br><span class="line">name: <span class="string">"Man-Killer"</span>,</span><br><span class="line">cluster_name: <span class="string">"elasticsearch"</span>,</span><br><span class="line">version: &#123;</span><br><span class="line">number: <span class="string">"2.2.1"</span>,</span><br><span class="line">build_hash: <span class="string">"d045fc29d1932bce18b2e65ab8b297fbf6cd41a1"</span>,</span><br><span class="line">build_timestamp: <span class="string">"2016-03-09T09:38:54Z"</span>,</span><br><span class="line">build_snapshot: <span class="literal">false</span>,</span><br><span class="line">lucene_version: <span class="string">"5.4.1"</span></span><br><span class="line">&#125;,</span><br><span class="line">tagline: <span class="string">"You Know, for Search"</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>说明elasticsearch已经启动并且正常运行了。</p>
+<h1 id="创建elasticsearch索引">创建elasticsearch索引</h1><h2 id="索引基本概念">索引基本概念</h2><p>Elasticsearch中存储数据的行为就叫做索引(indexing)，在索引中又分为类型(type)和文档(doucument)。我们可以用传统的关系型数据库来理解elasticsearch的存储结构:</p>
+<blockquote>
+<p>Relational DB -&gt; Databases -&gt; Tables -&gt; Rows -&gt; Columns<br>Elasticsearch -&gt; Indices   -&gt; Types  -&gt; Documents -&gt; Fields</p>
+</blockquote>
+<p>Elasticsearch集群可以包含多个索引(indices)（数据库），每一个索引可以包含多个类型(types)（表），每一个类型包含多个文档(documents)（行），然后每个文档包含多个字段(Fields)（列）。</p>
+<h2 id="创建索引">创建索引</h2><p>我们可以使用http的put方法创建索引，这里来创建一个员工目录:</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">PUT http://localhost:<span class="number">9200</span>/megacorp/employee/<span class="number">1</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="string">"first_name"</span> : <span class="string">"John"</span>,</span><br><span class="line">    <span class="string">"last_name"</span> :  <span class="string">"Smith"</span>,</span><br><span class="line">    <span class="string">"age"</span> :        <span class="number">25</span>,</span><br><span class="line">    <span class="string">"about"</span> :      <span class="string">"I love to go rock climbing"</span>,</span><br><span class="line">    <span class="string">"interests"</span>: [ <span class="string">"sports"</span>, <span class="string">"music"</span> ]</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<blockquote>
+<p>返回:<br><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">&#123;</span><br><span class="line">  <span class="string">"_index"</span>: <span class="string">"megacorp"</span>,</span><br><span class="line">  <span class="string">"_type"</span>: <span class="string">"employee"</span>,</span><br><span class="line">  <span class="string">"_id"</span>: <span class="string">"1"</span>,</span><br><span class="line">  <span class="string">"_version"</span>: <span class="number">1</span>,</span><br><span class="line">  <span class="string">"_shards"</span>: &#123;</span><br><span class="line">    <span class="string">"total"</span>: <span class="number">2</span>,</span><br><span class="line">    <span class="string">"successful"</span>: <span class="number">1</span>,</span><br><span class="line">    <span class="string">"failed"</span>: <span class="number">0</span></span><br><span class="line">  &#125;,</span><br><span class="line">  <span class="string">"created"</span>: <span class="literal">true</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>path:/megacorp/employee/1包含三部分信息</p>
+</blockquote>
+<table>
+<thead>
+<tr>
+<th>名字</th>
+<th style="text-align:right">说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>megacorp</td>
+<td style="text-align:right">索引名</td>
+</tr>
+<tr>
+<td>employee</td>
+<td style="text-align:right">类型名</td>
+</tr>
+<tr>
+<td>1</td>
+<td style="text-align:right">这个员工的ID</td>
+</tr>
+</tbody>
+</table>
+<p>请求实体（JSON文档），包含了这个员工的所有信息。他的名字叫“John Smith”，25岁，喜欢攀岩。</p>
+<p>可以通过这种方式添加多个员工信息<br><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line">PUT http://localhost:<span class="number">9200</span>/megacorp/employee/<span class="number">2</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="string">"first_name"</span> :  <span class="string">"Jane"</span>,</span><br><span class="line">    <span class="string">"last_name"</span> :   <span class="string">"Smith"</span>,</span><br><span class="line">    <span class="string">"age"</span> :         <span class="number">32</span>,</span><br><span class="line">    <span class="string">"about"</span> :       <span class="string">"I like to collect rock albums"</span>,</span><br><span class="line">    <span class="string">"interests"</span>:  [ <span class="string">"music"</span> ]</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">PUT http://localhost:<span class="number">9200</span>/megacorp/employee/<span class="number">3</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="string">"first_name"</span> :  <span class="string">"Douglas"</span>,</span><br><span class="line">    <span class="string">"last_name"</span> :   <span class="string">"Fir"</span>,</span><br><span class="line">    <span class="string">"age"</span> :         <span class="number">35</span>,</span><br><span class="line">    <span class="string">"about"</span>:        <span class="string">"I like to build cabinets"</span>,</span><br><span class="line">    <span class="string">"interests"</span>:  [ <span class="string">"forestry"</span> ]</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<h1 id="安装elasticsearch-head插件">安装elasticsearch-head插件</h1><p>elasticsearch可以安装一些插件来简化操作，对于索引的简单操作我们可以安装一个head插件。</p>
+<p>进入elasticsearch安装目录下的bin目录<br><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">plugin -install mobz/elasticsearch-head</span><br></pre></td></tr></table></figure></p>
+<p>使用：<a href="http://localhost:9200/_plugin/head/" target="_blank" rel="external">http://localhost:9200/_plugin/head/</a></p>
+<hr>
+<h4 id="参考资料">参考资料</h4><p>1、<a href="http://es.xiaoleilu.com/010_Intro/25_Tutorial_Indexing.html" target="_blank" rel="external">Elasticsearch权威指南-索引</a></p>
 
           
         
